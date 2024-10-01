@@ -1,28 +1,46 @@
-services:
-  jenkins:
-    image: jenkins/jenkins:lts  # Use the latest LTS version of Jenkins
-    ports:
-      - "8080:8080"               # Expose Jenkins on port 8080
-      - "50000:50000"             # Expose Jenkins agent port
-    environment:
-      JENKINS_OPTS: "--prefix=/jenkins"  # Optional: Set a prefix if running behind a reverse proxy
-    volumes:
-      - jenkins_home:/var/jenkins_home  # Persistent storage for Jenkins data
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Jenkins to use the host Docker daemon
-    networks:
-      - jenkins-net
-
-  dind:
-    image: docker:latest  # Use the latest Docker image
-    privileged: true       # Required to run Docker-in-Docker
-    volumes:
-      - /var/lib/docker     # Persist Docker data
-    networks:
-      - jenkins-net
+version: '3.8'  # Specify the version of Docker Compose
 
 networks:
-  jenkins-net:
+  docker:
 
 volumes:
-  jenkins_home:
+  jenkins-data:
+  jenkins-docker-certs:
+
+services:
+  jenkins:
+    image: jenkinsci/blueocean
+    restart: always
+    networks:
+      - docker
+    ports:
+      - 8080:8080  # Jenkins UI
+      - 50000:50000  # Jenkins agent communication
+    tty: true
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro  # Read-only access to certs
+      - $HOME:/home  # Mount home directory
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+
+  dind:
+    image: docker:dind
+    privileged: true  # Required for DinD to function
+    restart: always
+    networks:
+      docker:
+        aliases: 
+          - docker
+    ports:
+      - 2376:2376  # Docker daemon port
+    tty: true
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client  # Ensure certs are accessible
+      - $HOME:/home
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs  # Set TLS cert directory
 
