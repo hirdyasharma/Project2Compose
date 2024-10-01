@@ -1,0 +1,32 @@
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk11  # Use latest LTS version with JDK 11 for better compatibility
+    container_name: jenkins
+    restart: unless-stopped  # Ensures Jenkins restarts automatically if it stops
+    ports:
+      - "8080:8080"  # Exposes Jenkins UI on port 8080
+      - "50000:50000"  # Jenkins agent communication port
+    volumes:
+      - jenkins_home:/var/jenkins_home  # Mount a persistent volume to store Jenkins configuration and data
+      - /var/run/docker.sock:/var/run/docker.sock  # Bind Docker socket to allow Jenkins to use Docker on the host machine
+    environment:
+      - JENKINS_OPTS="--prefix=/jenkins"  # Optional: Prefix for Jenkins URL (useful when behind a reverse proxy)
+    privileged: true  # Grants Jenkins the required privileges to run Docker-in-Docker (DinD)
+    networks:
+      - jenkins-network  # Connects to the defined Docker network for service communication
+
+  docker:
+    image: docker:24.0.5-dind  # Latest stable Docker-in-Docker image
+    privileged: true  # DinD requires privileged mode to function
+    volumes:
+      - docker-data:/var/lib/docker  # Persist Docker data, such as images and containers
+    networks:
+      - jenkins-network  # Shared network with Jenkins for communication
+
+volumes:
+  jenkins_home:  # Volume for storing Jenkins data (jobs, plugins, config)
+  docker-data:  # Volume for storing Docker data
+
+networks:
+  jenkins-network:  # Defines a custom Docker network for the Jenkins and Docker services to communicate
+
