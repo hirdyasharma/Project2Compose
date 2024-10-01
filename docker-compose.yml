@@ -1,40 +1,29 @@
-version: '3.8'
-
 services:
-  # Jenkins service
   jenkins:
-    image: jenkins/jenkins:lts  # Using the latest long-term support image for Jenkins
-    container_name: jenkins  # Name of the Jenkins container
-    restart: unless-stopped  # Restart policy to keep Jenkins running
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    restart: unless-stopped
     ports:
-      - "8080:8080"  # Exposing Jenkins UI on port 8080
-      - "50000:50000"  # Port for Jenkins agents to connect
+      - "8080:8080"  # Jenkins UI
+      - "50000:50000"  # Jenkins agent port
     volumes:
-      - jenkins_home:/var/jenkins_home  # Persist Jenkins configuration and data
-      - /var/run/docker.sock:/var/run/docker.sock  # Bind Docker socket for host-level Docker access
-    environment:
-      - JENKINS_OPTS="--prefix=/jenkins"  # Optional prefix if using reverse proxy (can remove if not needed)
-    privileged: true  # Privileged mode for Docker-in-Docker (DinD) usage
+      - jenkins_home:/var/jenkins_home  # Persist Jenkins data
+      - /var/run/docker.sock:/var/run/docker.sock  # Allow Jenkins to use host Docker
     networks:
-      - jenkins-network  # Attached to custom network
+      - jenkins-network
 
-  # Docker-in-Docker (DinD) service
-  dind:
-    image: docker:24.0.6-dind  # Latest stable DinD image
-    container_name: dind  # Name of the DinD container
-    privileged: true  # Necessary for DinD to function
+  docker:
+    image: docker:20.10.23-dind  # Update to the latest DinD image
+    privileged: true  # Required for DinD
     volumes:
       - docker-data:/var/lib/docker  # Persist Docker data
     networks:
-      - jenkins-network  # Attached to the same network as Jenkins
+      - jenkins-network
 
-# Volumes for persisting data
 volumes:
-  jenkins_home:  # Jenkins data persistence
-  docker-data:  # Docker-in-Docker data persistence
+  jenkins_home:
+  docker-data:
 
-# Custom network for inter-service communication
 networks:
   jenkins-network:
-    driver: bridge  # Default network driver
 
