@@ -1,32 +1,40 @@
+version: '3.8'
+
 services:
+  # Jenkins service
   jenkins:
-    image: jenkins/jenkins:lts-jdk11  # Use latest LTS version with JDK 11 for better compatibility
-    container_name: jenkins
-    restart: unless-stopped  # Ensures Jenkins restarts automatically if it stops
+    image: jenkins/jenkins:lts  # Using the latest long-term support image for Jenkins
+    container_name: jenkins  # Name of the Jenkins container
+    restart: unless-stopped  # Restart policy to keep Jenkins running
     ports:
-      - "8080:8080"  # Exposes Jenkins UI on port 8080
-      - "50000:50000"  # Jenkins agent communication port
+      - "8080:8080"  # Exposing Jenkins UI on port 8080
+      - "50000:50000"  # Port for Jenkins agents to connect
     volumes:
-      - jenkins_home:/var/jenkins_home  # Mount a persistent volume to store Jenkins configuration and data
-      - /var/run/docker.sock:/var/run/docker.sock  # Bind Docker socket to allow Jenkins to use Docker on the host machine
+      - jenkins_home:/var/jenkins_home  # Persist Jenkins configuration and data
+      - /var/run/docker.sock:/var/run/docker.sock  # Bind Docker socket for host-level Docker access
     environment:
-      - JENKINS_OPTS="--prefix=/jenkins"  # Optional: Prefix for Jenkins URL (useful when behind a reverse proxy)
-    privileged: true  # Grants Jenkins the required privileges to run Docker-in-Docker (DinD)
+      - JENKINS_OPTS="--prefix=/jenkins"  # Optional prefix if using reverse proxy (can remove if not needed)
+    privileged: true  # Privileged mode for Docker-in-Docker (DinD) usage
     networks:
-      - jenkins-network  # Connects to the defined Docker network for service communication
+      - jenkins-network  # Attached to custom network
 
-  docker:
-    image: docker:24.0.5-dind  # Latest stable Docker-in-Docker image
-    privileged: true  # DinD requires privileged mode to function
+  # Docker-in-Docker (DinD) service
+  dind:
+    image: docker:24.0.6-dind  # Latest stable DinD image
+    container_name: dind  # Name of the DinD container
+    privileged: true  # Necessary for DinD to function
     volumes:
-      - docker-data:/var/lib/docker  # Persist Docker data, such as images and containers
+      - docker-data:/var/lib/docker  # Persist Docker data
     networks:
-      - jenkins-network  # Shared network with Jenkins for communication
+      - jenkins-network  # Attached to the same network as Jenkins
 
+# Volumes for persisting data
 volumes:
-  jenkins_home:  # Volume for storing Jenkins data (jobs, plugins, config)
-  docker-data:  # Volume for storing Docker data
+  jenkins_home:  # Jenkins data persistence
+  docker-data:  # Docker-in-Docker data persistence
 
+# Custom network for inter-service communication
 networks:
-  jenkins-network:  # Defines a custom Docker network for the Jenkins and Docker services to communicate
+  jenkins-network:
+    driver: bridge  # Default network driver
 
