@@ -9,7 +9,7 @@ volumes:
 
 services:
   jenkins:
-    image: jenkinsci/blueocean
+    image: jenkins:alpine
     restart: always
     networks:
       - docker
