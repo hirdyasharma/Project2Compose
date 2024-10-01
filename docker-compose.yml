@@ -1,29 +1,28 @@
 services:
   jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins
-    restart: unless-stopped
+    image: jenkins/jenkins:lts  # Use the latest LTS version of Jenkins
     ports:
-      - "8080:8080"  # Jenkins UI
-      - "50000:50000"  # Jenkins agent port
+      - "8080:8080"               # Expose Jenkins on port 8080
+      - "50000:50000"             # Expose Jenkins agent port
+    environment:
+      JENKINS_OPTS: "--prefix=/jenkins"  # Optional: Set a prefix if running behind a reverse proxy
     volumes:
-      - jenkins_home:/var/jenkins_home  # Persist Jenkins data
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Jenkins to use host Docker
+      - jenkins_home:/var/jenkins_home  # Persistent storage for Jenkins data
+      - /var/run/docker.sock:/var/run/docker.sock  # Allow Jenkins to use the host Docker daemon
     networks:
-      - jenkins-network
+      - jenkins-net
 
-  docker:
-    image: docker:20.10.23-dind  # Update to the latest DinD image
-    privileged: true  # Required for DinD
+  dind:
+    image: docker:latest  # Use the latest Docker image
+    privileged: true       # Required to run Docker-in-Docker
     volumes:
-      - docker-data:/var/lib/docker  # Persist Docker data
+      - /var/lib/docker     # Persist Docker data
     networks:
-      - jenkins-network
+      - jenkins-net
+
+networks:
+  jenkins-net:
 
 volumes:
   jenkins_home:
-  docker-data:
-
-networks:
-  jenkins-network:
 
