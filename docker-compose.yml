@@ -1,44 +1,44 @@
-version: '3.8'
+version: '3.8'  # Specify the version of Docker Compose syntax
 
 services:
-  dind:
-    image: docker:dind
-    container_name: dind
-    privileged: true
+  dind:  # Docker-In-Docker service
+    image: docker:dind  # Use the official Docker-in-Docker image
+    container_name: dind  # Name of the container
+    privileged: true  # Run the container in privileged mode to allow Docker to run inside
     environment:
-      DOCKER_TLS_CERTDIR: "/certs"
-    volumes:
-      - docker-certs-ca:/certs/ca
-      - docker-certs-client:/certs/client
-      - jenkins-data:/var/jenkins_home
-    networks:
-      jenkins:
+      DOCKER_TLS_CERTDIR: "/certs"  # Directory for Docker TLS certificates
+    volumes:  # Define volumes for persisting data
+      - docker-certs-ca:/certs/ca  # Volume for CA certificates
+      - docker-certs-client:/certs/client  # Volume for client certificates
+      - jenkins-data:/var/jenkins_home  # Volume for Jenkins data
+    networks:  # Define networks for the service
+      jenkins:  # Specify the network this service will connect to
         aliases:
-          - docker
+          - docker  # Alias for the dind service in the network
 
-  jenkins:
-    image: jenkins/jenkins:lts-jdk11
-    container_name: jenkins
+  jenkins:  # Jenkins service
+    image: jenkins/jenkins:lts-jdk11  # Use the official Jenkins image with JDK 11
+    container_name: jenkins  # Name of the Jenkins container
     environment:
-      DOCKER_HOST: "tcp://docker:2376"
-      DOCKER_CERT_PATH: "/certs/client"
-      DOCKER_TLS_VERIFY: 1
-    volumes:
-      - docker-certs-client:/certs/client:ro
-      - jenkins-data:/var/jenkins_home
-      - /usr/bin/docker:/usr/bin/docker
-    ports:
-      - "8080:8080"
-      - "50000:50000"
-    networks:
-      - jenkins
-    restart: unless-stopped
+      DOCKER_HOST: "tcp://docker:2376"  # Define Docker host for Jenkins to communicate with DinD
+      DOCKER_CERT_PATH: "/certs/client"  # Path to client certificates
+      DOCKER_TLS_VERIFY: 1  # Enable TLS verification for Docker commands
+    volumes:  # Define volumes for persisting Jenkins data
+      - docker-certs-client:/certs/client:ro  # Read-only access to client certificates
+      - jenkins-data:/var/jenkins_home  # Volume for Jenkins home directory
+      - /usr/bin/docker:/usr/bin/docker  # Mount the Docker binary into the container
+    ports:  # Define ports to expose
+      - "8080:8080"  # Expose Jenkins web interface
+      - "50000:50000"  # Expose Jenkins agent connection port
+    networks:  # Define networks for the service
+      - jenkins  # Connect to the jenkins network
+    restart: unless-stopped  # Restart policy for the Jenkins container
 
 volumes:
-  docker-certs-ca:
-  docker-certs-client:
-  jenkins-data:
+  docker-certs-ca:  # Define volume for CA certificates
+  docker-certs-client:  # Define volume for client certificates
+  jenkins-data:  # Define volume for Jenkins data
 
 networks:
-  jenkins:
+  jenkins:  # Define a custom network for the services to communicate
 
