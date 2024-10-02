@@ -18,7 +18,7 @@ Before you begin, ensure you have the following:
 
 ### Step 1: Clone the Repositories
 Clone the repositories to your local machine:
-```bash
+
 git clone https://github.com/hirdyasharma/aws-elastic-beanstalk-express-js-sample.git
 git clone https://github.com/hirdyasharma/Project2Compose.git
 Comments: Cloning the repositories gives you access to both the Node.js application and the Docker Compose configuration.
